@@ -1,0 +1,910 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>矫治器佩戴伴侣（一键生成患者每日正畸事项）</title>
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --blue:#4F46E5;--blue-light:#818CF8;--blue-dark:#3730A3;--blue-bg:rgba(79,70,229,0.05);
+  --indigo:#6366F1;--violet:#7C3AED;
+  --red:#EF4444;--red-bg:#FEF2F2;
+  --orange:#F59E0B;--amber:#F59E0B;
+  --green:#10B981;--emerald:#059669;
+  --gray1:#111827;--gray2:#374151;--gray3:#6B7280;--gray4:#9CA3AF;--gray5:#D1D5DB;--gray6:#E5E7EB;--gray7:#F3F4F6;--gray8:#F9FAFB;
+  --bg:#F8FAFC;
+  --radius:16px;
+  --shadow-sm:0 1px 2px rgba(0,0,0,0.04);
+  --shadow:0 1px 3px rgba(0,0,0,0.06),0 1px 2px rgba(0,0,0,0.04);
+  --shadow-md:0 4px 12px rgba(0,0,0,0.06),0 1px 3px rgba(0,0,0,0.04);
+  --shadow-lg:0 10px 30px rgba(0,0,0,0.08);
+}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Segoe UI','PingFang SC','Noto Sans SC','Helvetica Neue',sans-serif;
+  background:var(--bg);color:var(--gray1);min-height:100vh;
+  line-height:1.6;-webkit-font-smoothing:antialiased;
+}
+
+/* ===== HEADER ===== */
+.header{
+  position:relative;overflow:hidden;
+  background:linear-gradient(135deg,#4F46E5 0%,#7C3AED 50%,#6366F1 100%);
+  padding:44px 20px 40px;text-align:center;
+}
+.header::before{
+  content:'';position:absolute;top:-60%;right:-15%;
+  width:400px;height:400px;border-radius:50%;
+  background:rgba(255,255,255,0.06);
+  animation:float 8s ease-in-out infinite;
+}
+.header::after{
+  content:'';position:absolute;bottom:-40%;left:-15%;
+  width:300px;height:300px;border-radius:50%;
+  background:rgba(255,255,255,0.04);
+  animation:float 10s ease-in-out infinite reverse;
+}
+@keyframes float{0%,100%{transform:translate(0,0)}50%{transform:translate(20px,-20px)}}
+.header-inner{position:relative;z-index:1;max-width:640px;margin:0 auto}
+.header-logo{
+  display:inline-flex;align-items:center;justify-content:center;
+  width:56px;height:56px;border-radius:16px;
+  background:rgba(255,255,255,0.15);backdrop-filter:blur(10px);
+  margin-bottom:16px;border:1px solid rgba(255,255,255,0.2);
+}
+.header-logo svg{width:30px;height:30px}
+.header-brand{
+  font-size:11px;font-weight:600;color:rgba(255,255,255,0.5);
+  text-transform:uppercase;letter-spacing:3px;margin-bottom:8px;
+}
+.header-title{
+  font-size:28px;font-weight:800;color:#fff;
+  letter-spacing:-0.5px;margin-bottom:8px;
+  text-shadow:0 2px 10px rgba(0,0,0,0.1);
+}
+.header-title span{
+  background:linear-gradient(135deg,#FDE68A,#F59E0B);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  background-clip:text;
+}
+.header-sub{
+  font-size:14px;color:rgba(255,255,255,0.7);font-weight:400;
+  letter-spacing:0.2px;
+}
+.header-decoration{
+  position:absolute;bottom:0;left:0;right:0;height:32px;
+  background:var(--bg);
+  border-radius:24px 24px 0 0;
+}
+
+/* ===== MAIN ===== */
+.main{max-width:640px;margin:0 auto;padding:8px 16px 100px}
+
+/* ===== CARD ===== */
+.card{
+  background:#fff;border-radius:var(--radius);
+  margin-bottom:16px;
+  border:1px solid rgba(0,0,0,0.04);
+  box-shadow:var(--shadow);
+  overflow:hidden;
+  transition:transform .25s cubic-bezier(.4,0,.2,1),box-shadow .25s cubic-bezier(.4,0,.2,1);
+}
+.card:hover{
+  transform:translateY(-2px);
+  box-shadow:var(--shadow-md);
+}
+.card-header{
+  padding:16px 20px 12px;
+  font-size:15px;font-weight:700;color:var(--gray1);
+  display:flex;align-items:center;gap:10px;
+  border-bottom:1px solid var(--gray7);
+  background:var(--gray8);
+}
+.card-num{
+  display:inline-flex;align-items:center;justify-content:center;
+  width:28px;height:28px;border-radius:9px;
+  background:linear-gradient(135deg,var(--blue),var(--indigo));
+  color:#fff;font-size:13px;font-weight:700;flex-shrink:0;
+}
+.card-body{padding:18px 20px 20px}
+
+/* ===== FORM ===== */
+.field{margin-bottom:16px}
+.field:last-child{margin-bottom:0}
+.label{display:block;font-size:13px;font-weight:600;color:var(--gray2);margin-bottom:7px;letter-spacing:0.1px}
+.label .req{color:var(--red)}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+
+input[type=text],input[type=date],select,textarea{
+  width:100%;height:44px;padding:0 14px;
+  font-size:15px;font-family:inherit;color:var(--gray1);
+  background:var(--gray8);border:1.5px solid var(--gray6);
+  border-radius:12px;outline:none;
+  transition:all .2s cubic-bezier(.4,0,.2,1);-webkit-appearance:none;appearance:none;
+}
+input[type=text]:focus,input[type=date]:focus,select:focus,textarea:focus{
+  background:#fff;border-color:var(--blue);
+  box-shadow:0 0 0 4px rgba(79,70,229,0.1);
+}
+input[type=text]::placeholder,textarea::placeholder{color:var(--gray4)}
+select{
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 14 14'%3E%3Cpath d='M3.5 5.25l3.5 3.5 3.5-3.5' stroke='%239CA3AF' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 14px center;
+  padding-right:36px;cursor:pointer;
+}
+textarea{height:80px;padding:12px 14px;resize:none;line-height:1.6;border-radius:12px}
+
+/* Checkbox */
+.cb-group{display:flex;flex-direction:column;gap:2px}
+.cb-item{
+  display:flex;align-items:center;gap:12px;
+  padding:11px 14px;border-radius:12px;cursor:pointer;
+  transition:background .15s;
+}
+.cb-item:hover{background:var(--blue-bg)}
+.cb-item input{display:none}
+.cb-box{
+  width:22px;height:22px;min-width:22px;
+  border:2px solid var(--gray5);border-radius:7px;
+  transition:all .2s cubic-bezier(.4,0,.2,1);position:relative;
+}
+.cb-item input:checked+.cb-box{background:var(--blue);border-color:var(--blue);transform:scale(1.05)}
+.cb-item input:checked+.cb-box::after{
+  content:'';position:absolute;top:3px;left:6px;
+  width:6px;height:10px;border:solid #fff;border-width:0 2px 2px 0;
+  transform:rotate(45deg);
+}
+.cb-text{font-size:15px;font-weight:500;color:var(--gray1)}
+.cb-desc{font-size:12px;color:var(--gray3);margin-top:2px;line-height:1.4}
+
+/* Duration slider */
+.dur-row{display:flex;align-items:center;gap:16px;margin-top:4px}
+.dur-slider{
+  flex:1;-webkit-appearance:none;appearance:none;
+  height:6px;border-radius:3px;
+  background:linear-gradient(to right,var(--blue) 0%,var(--blue) var(--val),var(--gray6) var(--val),var(--gray6) 100%);
+  outline:none;cursor:pointer;
+}
+.dur-slider::-webkit-slider-thumb{
+  -webkit-appearance:none;width:26px;height:26px;border-radius:50%;
+  background:#fff;border:3px solid var(--blue);
+  box-shadow:0 2px 8px rgba(79,70,229,0.25);cursor:pointer;
+  transition:transform .15s;
+}
+.dur-slider::-webkit-slider-thumb:hover{transform:scale(1.1)}
+.dur-val{
+  font-size:32px;font-weight:800;color:var(--blue);
+  min-width:90px;text-align:right;
+  font-variant-numeric:tabular-nums;
+  letter-spacing:-1px;
+}
+.{font-size:12px;color:var(--gray4);margin-top:10px;line-height:1.5;padding:10px 14px;background:var(--amber);background:rgba(245,158,11,0.08);border-radius:10px;border:1px solid rgba(245,158,11,0.15)}
+
+/* Tooth model */
+.tm-grid{display:flex;justify-content:center;align-items:stretch;gap:5px;max-width:100%;overflow:visible}
+.tm-row{display:flex;gap:5px}
+.tm-cell{
+  width:30px;height:36px;border:1.5px solid var(--gray5);border-radius:8px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:11px;font-weight:600;cursor:pointer;
+  background:#fff;color:var(--gray1);
+  transition:all .15s;user-select:none;position:relative;
+}
+.tm-cell:hover{border-color:var(--blue);background:var(--blue-bg)}
+.tm-cell.sel{background:var(--blue);color:#fff;border-color:var(--blue)}
+.tm-cell.pair{background:var(--red);color:#fff;border-color:var(--red)}
+.tm-cell .bdg{
+  position:absolute;top:-5px;right:-5px;
+  background:var(--red);color:#fff;font-size:8px;font-weight:700;
+  width:14px;height:14px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+}
+.tm-h{height:0.5px;background:var(--blue);margin:2px 0;opacity:.3}
+@media(max-width:420px){
+  #toothModel{transform:scale(0.82);transform-origin:top center}
+}
+@media(max-width:360px){
+  #toothModel{transform:scale(0.7);transform-origin:top center}
+}
+
+.tm-v{width:0.3px;background:var(--blue);align-self:stretch;opacity:.3}
+.pair-tag{
+  display:inline-flex;align-items:center;
+  background:var(--red-bg);border:1px solid #FECACA;border-radius:8px;
+  padding:5px 10px;font-size:12px;color:var(--red);margin:3px;font-weight:500;
+}
+.pair-tag .x{cursor:pointer;margin-left:6px;opacity:.6}
+.pair-tag .x:hover{opacity:1}
+.add-c{
+  background:none;border:1px solid #FECACA;border-radius:6px;
+  color:var(--red);font-size:12px;cursor:pointer;
+  margin-left:3px;padding:2px 7px;font-family:inherit;font-weight:500;
+}
+.add-c:hover{background:var(--red-bg)}
+
+/* Buttons */
+.btn-confirm{
+  margin-top:12px;padding:10px 32px;height:40px;
+  font-size:14px;font-weight:600;font-family:inherit;
+  background:linear-gradient(135deg,var(--blue),var(--indigo));
+  color:#fff;border:none;border-radius:12px;cursor:pointer;
+  transition:all .2s;box-shadow:0 2px 8px rgba(79,70,229,0.2);
+}
+.btn-confirm:hover{opacity:.92;transform:translateY(-1px)}
+.btn-confirm:disabled{opacity:.35;cursor:default;box-shadow:none;transform:none}
+
+/* Submit */
+.submit-area{padding:0 16px;margin-top:8px}
+.btn-submit{
+  width:100%;height:52px;border:none;border-radius:14px;
+  font-size:17px;font-weight:700;font-family:inherit;
+  cursor:pointer;color:#fff;letter-spacing:0.3px;
+  background:linear-gradient(135deg,var(--blue) 0%,var(--violet) 100%);
+  box-shadow:0 4px 20px rgba(79,70,229,0.3);
+  transition:all .25s cubic-bezier(.4,0,.2,1);
+  position:relative;overflow:hidden;
+}
+.btn-submit::before{
+  content:'';position:absolute;top:0;left:-100%;width:100%;height:100%;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,0.15),transparent);
+  transition:left .5s;
+}
+.btn-submit:hover::before{left:100%}
+.btn-submit:hover{transform:translateY(-2px);box-shadow:0 8px 30px rgba(79,70,229,0.35)}
+.btn-submit:active{transform:translateY(0)}
+
+/* ===== CALENDAR DOCUMENT ===== */
+.calendar-document{
+  background:#fff;border-radius:var(--radius);
+  border:1px solid rgba(0,0,0,0.06);
+  box-shadow:var(--shadow-lg);
+  overflow:hidden;margin-top:20px;
+}
+
+/* Print Header */
+.ph{
+  padding:32px 28px 24px;
+  background:linear-gradient(135deg,#1E1B4B 0%,#312E81 50%,#3730A3 100%);
+  color:#fff;position:relative;overflow:hidden;
+}
+.ph::before{
+  content:'';position:absolute;top:-30%;right:-10%;
+  width:250px;height:250px;border-radius:50%;
+  background:rgba(255,255,255,0.04);
+}
+.ph-row{display:flex;justify-content:space-between;align-items:flex-start;position:relative;z-index:1}
+.ph-left{}
+.ph-clinic{font-size:11px;opacity:.4;text-transform:uppercase;letter-spacing:2.5px;margin-bottom:6px;font-weight:600}
+.ph-title{font-size:24px;font-weight:800;letter-spacing:-.5px}
+.ph-sub{font-size:13px;opacity:.55;margin-top:4px}
+.ph-badge{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.15);border-radius:12px;padding:6px 16px;font-size:15px;font-weight:700;backdrop-filter:blur(10px)}
+
+/* Patient info */
+.pi-bar{display:grid;grid-template-columns:repeat(2,1fr);gap:0;border-bottom:1px solid var(--gray6);background:#FAFAFA}
+.pi-item{padding:14px 20px;border-right:1px solid var(--gray6)}
+.pi-item:nth-child(2n){border-right:none}
+.pi-label{font-size:11px;color:var(--gray3);margin-bottom:3px;text-transform:uppercase;letter-spacing:.5px;font-weight:600}
+.pi-value{font-size:14px;font-weight:600;color:var(--gray1)}
+@media(min-width:500px){.pi-bar{grid-template-columns:repeat(4,1fr)}.pi-item:nth-child(2n){border-right:1px solid var(--gray6)}}
+
+/* Instructions */
+.inst{padding:16px 24px;background:var(--blue-bg);border-bottom:1px solid rgba(79,70,229,0.08)}
+.inst h3{font-size:14px;font-weight:700;color:var(--blue-dark);margin-bottom:8px}
+.inst-list{display:flex;flex-wrap:wrap;gap:8px}
+.inst-tag{background:rgba(79,70,229,0.08);border:1px solid rgba(79,70,229,0.12);border-radius:8px;padding:5px 14px;font-size:12px;color:var(--blue-dark);font-weight:600}
+
+/* Reminder */
+.reminder{margin:12px 24px;padding:12px 16px;background:rgba(245,158,11,0.06);border:1px solid rgba(245,158,11,0.15);border-radius:12px;font-size:12px;color:#92400E;line-height:1.6}
+
+/* Calendar grid */
+.cal-section{padding:20px 24px}
+.cal-title{font-size:16px;font-weight:700;color:var(--gray1);margin:20px 24px 4px;padding-left:2px}
+.cal-title:first-child{margin-top:0}
+.cal-month{margin-bottom:20px}
+.cal-month:last-child{margin-bottom:0}
+.mh{font-size:15px;font-weight:700;color:var(--gray1);margin-bottom:10px;display:flex;align-items:center;gap:8px}
+.mh-badge{background:var(--blue);color:#fff;font-size:11px;font-weight:700;padding:3px 10px;border-radius:7px}
+.cal-table{width:100%;border-collapse:separate;border-spacing:0;table-layout:fixed}
+.cal-table th{padding:8px 0;font-size:11px;font-weight:700;color:var(--gray3);text-align:center;text-transform:uppercase;letter-spacing:.5px}
+.cal-table td{padding:4px 2px;text-align:center;border:1px solid var(--gray7);border-radius:6px;vertical-align:top;height:50px}
+.cal-table td.empty{border:none;background:none}
+.cal-table td.today{background:var(--blue-bg);border-color:rgba(79,70,229,0.15)}
+.dn{font-size:13px;font-weight:600;color:var(--gray1);display:block}
+.dt{margin-top:1px;font-size:8px;color:var(--gray3);line-height:1.3;white-space:nowrap}
+
+/* Print footer */
+.pf{display:flex;justify-content:space-between;align-items:center;padding:14px 24px;background:#FAFAFA;border-top:1px solid var(--gray6);font-size:11px;color:var(--gray3)}
+
+/* Action buttons */
+.actions{padding:14px 16px;display:flex;gap:10px;flex-direction:column}
+.btn-action{
+  width:100%;height:48px;border:none;border-radius:14px;
+  font-size:15px;font-weight:700;font-family:inherit;cursor:pointer;
+  transition:all .25s cubic-bezier(.4,0,.2,1);
+  display:flex;align-items:center;justify-content:center;gap:8px;letter-spacing:0.2px;
+}
+.btn-print{background:linear-gradient(135deg,var(--orange),#D97706);color:#fff;box-shadow:0 4px 16px rgba(245,158,11,0.25)}
+.btn-print:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(245,158,11,0.3)}
+.btn-back{background:#fff;color:var(--gray2);border:1.5px solid var(--gray5);box-shadow:var(--shadow)}
+.btn-back:hover{background:var(--gray8);border-color:var(--gray4)}
+
+/* Sections */
+.el-section{display:none}.el-section.show{display:block}
+.train-section{display:none}.train-section.show{display:block}
+
+/* Train inputs */
+.train-inputs{background:var(--gray8);border-radius:10px;padding:12px 14px}
+.train-inputs input[type=number]{height:38px;font-size:14px;text-align:center;border-radius:10px}
+
+/* Placeholder */
+.placeholder{
+  background:#fff;border-radius:var(--radius);
+  border:2px dashed var(--gray5);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  min-height:240px;color:var(--gray4);gap:10px;padding:40px 20px;
+}
+.placeholder svg{opacity:.2}
+.placeholder span{font-size:14px;font-weight:500}
+
+/* Print */
+@media print{
+  body{background:#fff}
+  .header,.card,.submit-area,.actions,.placeholder{display:none!important}
+  .main{padding:0;max-width:100%}
+  .calendar-document{box-shadow:none;border:none;border-radius:0}
+  @page{margin:10mm;size:A4}
+}
+
+/* Notes */
+.note-display{
+  margin:12px 24px;padding:14px 18px;
+  background:var(--blue-bg);border:1px solid rgba(79,70,229,0.1);
+  border-radius:12px;font-size:13px;color:var(--gray2);line-height:1.7;
+}
+.note-display strong{color:var(--gray1)}
+
+/* Tooth calendar specific */
+.month-card{margin-bottom:16px}
+.month-card:last-child{margin-bottom:0}
+.month-hd{font-size:15px;font-weight:700;color:var(--gray1);margin-bottom:10px;padding-left:2px}
+.month-bd{display:grid;grid-template-columns:repeat(7,1fr);gap:3px}
+.wk-hd{text-align:center;font-size:11px;font-weight:700;color:var(--gray3);padding:6px 0;text-transform:uppercase;letter-spacing:.5px}
+.day-c{text-align:center;border-radius:8px;padding:4px 2px;min-height:42px;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.day-on{background:rgba(79,70,229,0.04);border:1px solid rgba(79,70,229,0.08)}
+.day-off{background:transparent;border:1px solid transparent}
+.day-n{font-size:12px;font-weight:600;color:var(--gray1)}
+.day-on .day-n{color:var(--blue)}
+.day-dur{font-size:9px;color:var(--gray3);font-weight:600;margin-top:1px}
+.day-el{font-size:8px;color:var(--red);font-weight:700;margin-top:1px}
+.day-tr{font-size:8px;color:var(--green);font-weight:700;margin-top:1px}
+.day-lv{background:rgba(79,70,229,0.1)!important;border:2px solid var(--blue)!important}
+.day-lv .day-n{color:var(--blue)!important;font-size:13px}
+.day-nv{background:rgba(239,68,68,0.08)!important;border:2px solid var(--red)!important}
+.day-nv .day-n{color:var(--red)!important;font-size:13px}
+.day-visit{font-size:9px;font-weight:700;margin-top:2px;white-space:nowrap}
+.day-lv .day-visit{color:var(--blue)}
+.day-nv .day-visit{color:var(--red)}
+.day-on .day-el{font-size:9px;color:var(--red);font-weight:600;margin-top:1px;background:rgba(239,68,68,0.06);border-radius:3px;padding:0 3px}
+.day-on .day-tr{font-size:9px;color:var(--emerald);font-weight:600;margin-top:1px;background:rgba(16,185,129,0.06);border-radius:3px;padding:0 3px}
+.day-on .day-dur{font-size:10px;color:var(--gray2);font-weight:700;margin-top:1px}
+
+/* Animal card picker */
+.animal-cards{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}
+.animal-card{
+  display:flex;flex-direction:column;align-items:center;gap:4px;
+  padding:8px 6px 6px;border-radius:10px;cursor:pointer;
+  border:2px solid var(--gray5);background:#fff;transition:all .15s;
+  width:calc(16.666% - 7px);min-width:70px;
+}
+.animal-card img{width:48px;height:48px;object-fit:contain}
+.animal-card span{font-size:11px;font-weight:600;color:var(--gray2)}
+.animal-card:hover{border-color:var(--blue);background:var(--blue-bg)}
+.animal-card.sel{border-color:var(--blue);background:var(--blue-bg);box-shadow:0 0 0 2px var(--blue)}
+.animal-card.sel span{color:var(--blue)}
+@media(max-width:420px){
+  .animal-card{min-width:60px;padding:6px 4px 4px}
+  .animal-card img{width:40px;height:40px}
+  .animal-card span{font-size:10px}
+}
+.unit-label{font-size:11px;color:var(--gray3);margin-left:4px}
+</style>
+<script>/* v1775388797 */
+function pickAnimal(el){
+  document.querySelectorAll('.animal-card').forEach(function(c){c.classList.remove('sel')});
+  el.classList.add('sel');
+  document.getElementById('elAnimal').value=el.dataset.value;
+  if(typeof collectData==='function')collectData();
+}
+</script>
+</head>
+<body>
+<!-- Header -->
+<div class="header">
+  <div class="header-inner">
+    <div class="header-logo">
+      <svg viewBox="0 0 36 36" fill="none">
+        <rect x="6" y="12" width="6" height="10" rx="2" fill="white" opacity="0.9"/>
+        <rect x="13" y="10" width="6" height="14" rx="2" fill="white" opacity="0.9"/>
+        <rect x="20" y="10" width="6" height="14" rx="2" fill="white" opacity="0.9"/>
+        <rect x="27" y="12" width="6" height="10" rx="2" fill="white" opacity="0.9"/>
+        <circle cx="13" cy="10" r="1.5" fill="white" opacity="0.6"/>
+        <circle cx="20" cy="10" r="1.5" fill="white" opacity="0.6"/>
+        <circle cx="27" cy="12" r="1.5" fill="white" opacity="0.6"/>
+      </svg>
+    </div>
+    <div class="header-brand">Orthodontic Companion System</div>
+    <div class="header-title"><span>OCS</span> 正畸佩戴伴侣</div>
+    <div class="header-sub">一键生成正畸患者每日事项</div>
+  </div>
+  <div class="header-decoration"></div>
+</div>
+
+<div class="main">
+
+<div class="main">
+  <!-- 诊所信息 -->
+  <div class="card">
+    <div class="card-header"><span class="card-num">1</span>一、基本信息</div>
+    <div class="card-body">
+      <div class="field">
+        <label class="label">患者姓名 <span class="req">*</span></label>
+        <input type="text" id="patientName" placeholder="请输入患者姓名">
+      </div>
+      <div class="field row2">
+        <div>
+          <label class="label">本次复诊日期 <span class="req">*</span></label>
+          <input type="date" id="lastVisit">
+        </div>
+        <div>
+          <label class="label">下次复诊日期 <span class="req">*</span></label>
+          <input type="date" id="nextVisit">
+        </div>
+      </div>
+      <div class="field">
+        <label class="label">诊所名称</label>
+        <input type="text" id="clinicName" placeholder="请输入诊所名称">
+      </div>
+    </div>
+  </div>
+
+  <!-- 矫治器类型 -->
+  <div class="card">
+    <div class="card-header"><span class="card-num">2</span>二、矫治器类型与佩戴时长</div>
+    <div class="card-body">
+      <div class="field">
+        <label class="label">请选择 <span class="req">*</span></label>
+        <select id="applianceType">
+          <option value="">-- 请选择 --</option>
+          <option value="invisible">隐形矫正</option>
+          <option value="bracket">托槽矫正</option>
+          <option value="fr3">FR3</option>
+          <option value="fr2">FR2</option>
+          <option value="expander">活动式扩弓器</option>
+          <option value="tb">TB</option>
+          <option value="myofunctional">肌激动器</option>
+          <option value="myo_headgear">肌激动器+口外弓+头帽</option>
+        </select>
+      </div>
+      <div class="dur-row" id="durCard">
+        <input type="range" class="dur-slider" id="durSlider" min="1" max="24" value="22" style="--val:91.7%">
+        <span class="dur-val" id="durVal">22 小时</span>
+      </div>
+      
+    </div>
+  </div>
+
+  <!-- 皮筋牵引 -->
+  <div class="card">
+    <div class="card-header"><span class="card-num">3</span>三、橡皮圈牵引</div>
+    <div class="card-body">
+      <label class="cb-item" style="margin-bottom:12px">
+        <input type="checkbox" id="useElastic" onchange="toggleEl()">
+        <span class="cb-box"></span>
+        <div class="cb-text">使用皮筋牵引</div>
+      </label>
+      <div class="el-section" id="elSection">
+        <div class="field row2">
+          <div>
+            <label class="label">皮圈动物 <span class="req">*</span></label>
+            <div id="elAnimalCards" class="animal-cards">
+              <div class="animal-card" data-value="rabbit" onclick="pickAnimal(this)"><img src="img/rabbit.png" alt="兔子"><span>兔子</span></div>
+              <div class="animal-card" data-value="fox" onclick="pickAnimal(this)"><img src="img/fox.png" alt="狐狸"><span>狐狸</span></div>
+              <div class="animal-card" data-value="monkey" onclick="pickAnimal(this)"><img src="img/monkey.png" alt="猴子"><span>猴子</span></div>
+              <div class="animal-card" data-value="tiger" onclick="pickAnimal(this)"><img src="img/tiger.png" alt="老虎"><span>老虎</span></div>
+              <div class="animal-card" data-value="penguin" onclick="pickAnimal(this)"><img src="img/penguin.png" alt="企鹅"><span>企鹅</span></div>
+              <div class="animal-card" data-value="squirrel" onclick="pickAnimal(this)"><img src="img/squirrel.png" alt="松鼠"><span>松鼠</span></div>
+            </div>
+            <input type="hidden" id="elAnimal" value="">
+          </div>
+          <div>
+            <label class="label">佩戴方式 <span class="req">*</span></label>
+            <select id="elPattern">
+              <option>全天佩戴</option>
+              <option>仅白天佩戴</option>
+              <option>仅夜间佩戴</option>
+            </select>
+          </div>
+        </div>
+        <div class="field">
+          <label class="label">更换频率 <span class="req">*</span></label>
+          <select id="elFreq">
+            <option>每天更换</option>
+            <option>隔天更换</option>
+          </select>
+        </div>
+        <label class="label" style="margin-top:10px">点击牙齿选择牵引位置（可多选），选好后点击确认</label>
+        <div id="toothModel" style="margin-top:8px"></div>
+        
+        <div style="text-align:center">
+          <button type="button" class="btn-confirm" id="confirmBtn" onclick="confirmPair()" disabled>确认牵引</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 肌功能训练 -->
+  <div class="card">
+    <div class="card-header"><span class="card-num">4</span>四、肌功能训练</div>
+    <div class="card-body">
+      <label class="cb-item" style="margin-bottom:12px">
+        <input type="checkbox" id="useTraining" onchange="toggleTraining()">
+        <span class="cb-box"></span>
+        <div class="cb-text">需要肌功能训练</div>
+      </label>
+      <div class="train-section" id="trainSection">
+        <div class="cb-group" id="trainGroup">
+          <label class="cb-item"><input type="checkbox" name="training" value="n_point" onchange="trainChanged()"><span class="cb-box"></span><div><div class="cb-text">N点训练</div><div class="cb-desc">舌尖抵住上腭切牙乳头处（N点）</div></div></label>
+          <div class="train-inputs" id="train_inputs_n_point" style="display:none;margin:4px 0 8px 32px">
+            <div class="row2"><div><div class="label" style="font-size:12px">每天次数</div><input type="number" class="train-count" data-train="n_point" value="3" min="1" max="10"></div><div><div class="label" style="font-size:12px">每次时间</div><input type="number" class="train-dur" data-train="n_point" value="5" min="1" max="30" step="1"><span class="unit-label">分钟</span></div></div>
+          </div>
+          <label class="cb-item"><input type="checkbox" name="training" value="n_swallow" onchange="trainChanged()"><span class="cb-box"></span><div><div class="cb-text">N点吞咽水训练</div><div class="cb-desc">舌尖抵N点后吞咽少量水</div></div></label>
+          <div class="train-inputs" id="train_inputs_n_swallow" style="display:none;margin:4px 0 8px 32px">
+            <div class="row2"><div><div class="label" style="font-size:12px">每天次数</div><input type="number" class="train-count" data-train="n_swallow" value="3" min="1" max="10"></div><div><div class="label" style="font-size:12px">每次时间</div><input type="number" class="train-dur" data-train="n_swallow" value="5" min="1" max="30" step="1"><span class="unit-label">分钟</span></div></div>
+          </div>
+          <label class="cb-item"><input type="checkbox" name="training" value="tongue_back" onchange="trainChanged()"><span class="cb-box"></span><div><div class="cb-text">卷舌向后训练</div><div class="cb-desc">舌体卷曲后缩，锻炼舌肌力量</div></div></label>
+          <div class="train-inputs" id="train_inputs_tongue_back" style="display:none;margin:4px 0 8px 32px">
+            <div class="row2"><div><div class="label" style="font-size:12px">每天次数</div><input type="number" class="train-count" data-train="tongue_back" value="3" min="1" max="10"></div><div><div class="label" style="font-size:12px">每次时间</div><input type="number" class="train-dur" data-train="tongue_back" value="5" min="1" max="30" step="1"><span class="unit-label">分钟</span></div></div>
+          </div>
+          <label class="cb-item"><input type="checkbox" name="training" value="masseter" onchange="trainChanged()"><span class="cb-box"></span><div><div class="cb-text">咬肌训练</div><div class="cb-desc">上下牙轻咬，锻炼咬肌肌力</div></div></label>
+          <div class="train-inputs" id="train_inputs_masseter" style="display:none;margin:4px 0 8px 32px">
+            <div class="row2"><div><div class="label" style="font-size:12px">每天次数</div><input type="number" class="train-count" data-train="masseter" value="3" min="1" max="10"></div><div><div class="label" style="font-size:12px">每次时间</div><input type="number" class="train-dur" data-train="masseter" value="5" min="1" max="30" step="1"><span class="unit-label">分钟</span></div></div>
+          </div>
+          <label class="cb-item"><input type="checkbox" name="training" value="nose_walk" onchange="trainChanged()"><span class="cb-box"></span><div><div class="cb-text">捏鼻踱步训练</div><div class="cb-desc">捏住鼻子踱步行走，练习鼻呼吸</div></div></label>
+          <div class="train-inputs" id="train_inputs_nose_walk" style="display:none;margin:4px 0 8px 32px">
+            <div class="row2"><div><div class="label" style="font-size:12px">每天次数</div><input type="number" class="train-count" data-train="nose_walk" value="3" min="1" max="10"></div><div><div class="label" style="font-size:12px">每次时间</div><input type="number" class="train-dur" data-train="nose_walk" value="5" min="1" max="30" step="1"><span class="unit-label">分钟</span></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 医生备注 -->
+  <div class="card">
+    <div class="card-header"><span class="card-num">5</span>五、医生备注</div>
+    <div class="card-body">
+      <div class="field">
+        <textarea id="doctorNote" placeholder="输入医生备注或特殊医嘱..."></textarea>
+      </div>
+    </div>
+  </div>
+
+  <!-- 生成按钮 -->
+  <div class="submit-area">
+    <button class="btn-submit" onclick="generate()">生成佩戴日历</button>
+  </div>
+
+  <!-- Preview area -->
+  <div id="previewArea"></div>
+</div></div>
+
+<div id="printArea" style="display:none"></div>
+
+
+<script>
+var appNames={invisible:'隐形矫正',bracket:'托槽矫正',fr3:'FR3',fr2:'FR2',expander:'活动式扩弓器',tb:'TB',myofunctional:'肌激动器',myo_headgear:'肌激动器+口外弓+头帽'};
+var trainNames={n_point:'N点训练',n_swallow:'N点吞咽水训练',tongue_back:'卷舌向后训练',masseter:'咬肌训练',nose_walk:'捏鼻踱步训练'};
+var animalN={rabbit:'兔子',fox:'狐狸',monkey:'猴子',tiger:'老虎',penguin:'企鹅',squirrel:'松鼠'};
+var fdiN={11:'右上中切牙',12:'右上侧切牙',13:'右上尖牙',14:'右上第一前磨牙',15:'右上第二前磨牙',16:'右上第一磨牙',17:'右上第二磨牙',18:'右上第三磨牙',21:'左上中切牙',22:'左上侧切牙',23:'左上尖牙',24:'左上第一前磨牙',25:'左上第二前磨牙',26:'左上第一磨牙',27:'左上第二磨牙',28:'左上第三磨牙',31:'左下中切牙',32:'左下侧切牙',33:'左下尖牙',34:'左下第一前磨牙',35:'左下第二前磨牙',36:'左下第一磨牙',37:'左下第二磨牙',38:'左下第三磨牙',41:'右下中切牙',42:'右下侧切牙',43:'右下尖牙',44:'右下第一前磨牙',45:'右下第二前磨牙',46:'右下第一磨牙',47:'右下第二磨牙',48:'右下第三磨牙'};
+
+var ePairs=[],pending=[];
+function tl(f){return f%10}
+function fdi2n(f){return fdiN[f]||''}
+function toggleEl(){document.getElementById('elSection').classList.toggle('show',document.getElementById('useElastic').checked);if(document.getElementById('useElastic').checked)renderTM()}
+
+// Appliance change: bracket = fixed 24h
+var apSel=document.getElementById('applianceType');
+var durSlider=document.getElementById('durSlider');
+var durVal=document.getElementById('durVal');
+var durCard=document.getElementById('durCard');
+
+function updateDur(){
+  var v=durSlider.value;
+  durVal.textContent=v+' 小时';
+  durSlider.style.setProperty('--val',((v-1)/23*100)+'%');
+}
+durSlider.addEventListener('input',updateDur);
+
+apSel.addEventListener('change',function(){
+  if(apSel.value==='bracket'){
+    durSlider.value=24;durSlider.disabled=true;
+    durVal.textContent='24 小时';
+    durSlider.style.setProperty('--val','100%');
+    durCard.style.opacity='.5';
+  }else{
+    durSlider.disabled=false;durCard.style.opacity='1';updateDur();
+  }
+});
+
+function renderTM(){
+  var w=document.getElementById('toothModel'),s='';
+  s+='<div class="tm-grid"><div class="tm-row">';
+  for(var i=8;i>=1;i--)s+=tc(10+i,i);
+  s+='</div><div class="tm-v"></div><div class="tm-row">';
+  for(var i=1;i<=8;i++)s+=tc(20+i,i);
+  s+='</div></div><div class="tm-h"></div>';
+  s+='<div class="tm-grid"><div class="tm-row">';
+  for(var i=8;i>=1;i--)s+=tc(30+i,i);
+  s+='</div><div class="tm-v"></div><div class="tm-row">';
+  for(var i=1;i<=8;i++)s+=tc(40+i,i);
+  s+='</div></div>';
+  w.innerHTML=s;renderPT();updCB();
+}
+function tc(fdi,num){
+  var sel=pending.indexOf(fdi)!==-1,pc=gpc(fdi);
+  var c='tm-cell';if(sel)c+=' sel';else if(pc>0)c+=' pair';
+  var bd=pc>1?'<span class="bdg">'+pc+'</span>':'';
+  return '<div class="'+c+'" onclick="ckT('+fdi+')">'+num+bd+'</div>';
+}
+function gpc(f){var c=0;for(var i=0;i<ePairs.length;i++)if(ePairs[i].t.indexOf(f)!==-1)c+=ePairs[i].c;return c}
+function inP(f){for(var i=0;i<ePairs.length;i++)if(ePairs[i].t.indexOf(f)!==-1)return true;return false}
+function ckT(f){
+  if(inP(f)){for(var i=ePairs.length-1;i>=0;i--)if(ePairs[i].t.indexOf(f)!==-1)ePairs.splice(i,1);pending=[];renderTM();return}
+  var x=pending.indexOf(f);if(x===-1)pending.push(f);else pending.splice(x,1);
+  renderTM();
+}
+function updCB(){var b=document.getElementById('confirmBtn');if(b)b.disabled=pending.length<2}
+function confirmPair(){if(pending.length<2)return;ePairs.push({t:pending.slice(),c:1});pending=[];renderTM()}
+function rmP(i){ePairs.splice(i,1);renderTM()}
+function addP(i){ePairs[i].c=Math.min(8,ePairs[i].c+1);renderTM()}
+function renderPT(){
+  var w=document.getElementById('pairTags');if(!w)return;var s='';
+  for(var i=0;i<ePairs.length;i++){
+    var p=ePairs[i],str=p.t.map(function(t){return tl(t)}).join(' → ');
+    s+='<span class="pair-tag">'+str;if(p.c>1)s+=' ×'+p.c;
+    s+=' <span class="x" onclick="rmP('+i+')">&#10005;</span></span>';
+    if(p.c<8)s+='<button class="add-c" onclick="addP('+i+')">+1</button>';
+  }
+  w.innerHTML=s;
+}
+
+function buildSVG(pairs){
+  var cw=30,ch=36,gap=3,qw=8*cw+7*gap,xw=6,W=qw*2+xw,H=ch*2+xw;
+  var h='<svg viewBox="0 0 '+W+' '+H+'" width="100%" style="display:block;margin:0 auto;font-family:-apple-system,sans-serif">';
+  h+='<rect width="'+W+'" height="'+H+'" fill="#FFF5F5" rx="4"/>';
+  var cx=qw+xw/2,cy=ch+xw/2;
+  h+='<text x="8" y="'+(H/2)+'" font-size="8" fill="#FF3B30" font-weight="700" dominant-baseline="central">右</text>';
+  h+='<text x="'+(W-12)+'" y="'+(H/2)+'" font-size="8" fill="#FF3B30" font-weight="700" text-anchor="end" dominant-baseline="central">左</text>';
+  h+='<line x1="0" y1="'+cy+'" x2="'+W+'" y2="'+cy+'" stroke="#007AFF" stroke-width="1" opacity=".25"/>';
+  h+='<line x1="'+cx+'" y1="0" x2="'+cx+'" y2="'+H+'" stroke="#007AFF" stroke-width="1" opacity=".25"/>';
+  var px={};
+  function dq(fs,ox,oy,rev){for(var i=0;i<8;i++){var ii=rev?(7-i):i;var fdi=fs+ii,x=ox+i*(cw+gap),y=oy;px[fdi]={x:x+cw/2,y:y+ch/2};var ip=false;for(var j=0;j<pairs.length;j++)if(pairs[j].t.indexOf(fdi)!==-1){ip=true;break;}h+='<rect x="'+x+'" y="'+y+'" width="'+cw+'" height="'+ch+'" rx="3" fill="'+(ip?'#FF3B30':'#fff')+'" stroke="'+(ip?'#FF3B30':'#555')+'" stroke-width=".7"/>';h+='<text x="'+(x+cw/2)+'" y="'+(y+ch/2)+'" font-size="'+(ip?'16':'11')+'" fill="'+(ip?'#fff':'#333')+'" text-anchor="middle" dominant-baseline="central" font-weight="900"'+(ip?' stroke="#FF3B30" stroke-width="2.5" paint-order="stroke"':'')+'>'+tl(fdi)+'</text>';}}
+  dq(11,0,0,true);dq(21,qw+xw,0);dq(31,0,ch+xw,true);dq(41,qw+xw,ch+xw);
+  for(var i=0;i<pairs.length;i++){var p=pairs[i];for(var t=0;t<p.t.length-1;t++){var a=px[p.t[t]],b=px[p.t[t+1]];if(!a||!b)continue;for(var j=0;j<p.c;j++){var off=(j-(p.c-1)/2)*2,dx=b.x-a.x,dy=b.y-a.y,dist=Math.sqrt(dx*dx+dy*dy);if(dist<1)continue;var nx=-dy/dist*off,ny=dx/dist*off,mx=(a.x+b.x)/2+nx,my=(a.y+b.y)/2+ny+dist*.08;h+='<path d="M '+a.x+' '+a.y+' Q '+mx+' '+my+' '+b.x+' '+b.y+'" stroke="#FF3B30" stroke-width="1.2" fill="none" stroke-linecap="round" opacity=".55"/>';}h+='<circle cx="'+a.x+'" cy="'+a.y+'" r="2" fill="#FF3B30"/>';h+='<circle cx="'+b.x+'" cy="'+b.y+'" r="2" fill="#FF3B30"/>';}}
+  h+='</svg>';return h;
+}
+
+function esc(s){var d=document.createElement('div');d.textContent=s;return d.innerHTML}
+
+function generate(){
+  var name=document.getElementById('patientName').value.trim();
+  var clinic=document.getElementById('clinicName').value.trim();
+  var lv=document.getElementById('lastVisit').value;
+  var nv=document.getElementById('nextVisit').value;
+  var at=document.getElementById('applianceType').value;
+  var dur=durSlider.disabled?'24':durSlider.value;
+  var useEl=document.getElementById('useElastic').checked;
+  var useTr=document.getElementById('useTraining')&&document.getElementById('useTraining').checked;
+  var note=document.getElementById('doctorNote').value.trim();
+  if(!name){alert('请填写患者姓名');return}
+  if(!lv){alert('请选择本次复诊日期');return}
+  if(!nv){alert('请选择下次复诊日期');return}
+  if(!at){alert('请选择矫治器类型');return}
+  var sd=new Date(lv),ed=new Date(nv);
+  if(ed<=sd){alert('下次复诊日期必须晚于本次复诊日期');return}
+  var trains=[];
+  document.querySelectorAll('input[name="training"]:checked').forEach(function(cb){
+    var countEl=document.querySelector('.train-count[data-train="'+cb.value+'"]');
+    var durEl=document.querySelector('.train-dur[data-train="'+cb.value+'"]');
+    trains.push({
+      id:cb.value,
+      name:trainNames[cb.value]||cb.value,
+      count:countEl?parseInt(countEl.value)||3:3,
+      dur:durEl?parseInt(durEl.value)||3:3
+    });
+  });
+  var aName=appNames[at]||at;
+  var dOpts={year:'numeric',month:'long',day:'numeric'};
+  var ss=sd.toLocaleDateString('zh-CN',dOpts),es=ed.toLocaleDateString('zh-CN',dOpts);
+  var total=Math.ceil((ed-sd)/864e5);
+  var wd=['日','一','二','三','四','五','六'];
+  
+
+  // Generate dates array
+  var dates=[];
+  var tmp=new Date(sd);
+  while(tmp<ed){
+    var y=tmp.getFullYear(),m=String(tmp.getMonth()+1).padStart(2,'0'),d=String(tmp.getDate()).padStart(2,'0');
+    dates.push(y+'-'+m+'-'+d);
+    tmp.setDate(tmp.getDate()+1);
+  }
+  // Rebuild months as {y,m} for calendar rendering
+  var months=[];
+  tmp=new Date(sd);
+  while(tmp<ed){
+    var my=tmp.getFullYear(),mm=tmp.getMonth();
+    if(!months.length||months[months.length-1].y!==my||months[months.length-1].m!==mm){
+      months.push({y:my,m:mm});
+    }
+    tmp.setDate(tmp.getDate()+1);
+  }
+
+  var h='';
+
+  // 1、基本信息
+  h+='<div class="ph"><div class="ph-row"><div class="ph-left">';
+  h+='<div class="ph-clinic">'+(clinic?esc(clinic):'Orthodontic Treatment')+'</div>';
+  h+='<div class="ph-title">一、基本信息</div>';
+  h+='<div class="ph-sub">'+esc(aName)+' | '+ss+' ~ '+es+'</div>';
+  h+='</div><div class="ph-badge">'+total+' 天</div></div></div>';
+  h+='<div class="pi-bar">';
+  h+='<div class="pi-item"><div class="pi-label">患者</div><div class="pi-value">'+esc(name)+'</div></div>';
+  h+='<div class="pi-item"><div class="pi-label">矫治器</div><div class="pi-value">'+esc(aName)+'</div></div>';
+  h+='<div class="pi-item"><div class="pi-label">周期</div><div class="pi-value">'+ss+'<br>'+es+'</div></div>';
+  
+  h+='</div>';
+
+  // 预读取皮筋佩戴模式（日历渲染需要）
+  var ep='';
+  if(useEl) ep=document.getElementById('elPattern').value||'全天';
+
+  // 2、佩戴日历
+  // 复诊日期key
+  var lvKey=lv, nvKey=nv;
+  h+='<div class="cal-title">二、佩戴日历</div>';
+  h+='<div class="cal-section">';
+  months.forEach(function(m){
+    var ds=dates.filter(function(d){var dm=new Date(d);return dm.getFullYear()===m.y&&dm.getMonth()===m.m;});
+    var md=new Date(m.y,m.m+1,0).getDate();
+    h+='<div class="month-card"><div class="month-hd">'+m.y+'年'+(m.m+1)+'月</div>';
+    h+='<div class="month-bd">';
+    for(var wi=0;wi<7;wi++) h+='<div class="wk-hd">'+wd[wi]+'</div>';
+    var fd=new Date(m.y,m.m,1).getDay();
+    for(var e=0;e<fd;e++) h+='<div class="day-c"></div>';
+    for(var di=1;di<=md;di++){
+      var key=m.y+'-'+String(m.m+1).padStart(2,'0')+'-'+String(di).padStart(2,'0');
+      var inD=ds.indexOf(key)>=0;
+      var isLv=(key===lvKey), isNv=(key===nvKey);
+      var cls='day-c';
+      if(isLv) cls+=' day-lv';
+      else if(isNv) cls+=' day-nv';
+      else if(inD) cls+=' day-on';
+      else cls+=' day-off';
+      h+='<div class="'+cls+'">';
+      h+='<div class="day-n">'+di+'</div>';
+      if(isLv){
+        h+='<div class="day-visit">今日就诊</div>';
+      }else if(isNv){
+        h+='<div class="day-visit">下次复诊</div>';
+      }else if(inD){
+        h+='<div class="day-item day-dur">'+esc(aName)+'</div>';
+        if(useEl&&ePairs.length>0) h+='<div class="day-item day-el">皮筋</div>';
+        if(useTr&&trains.length>0) trains.forEach(function(t){h+='<div class="day-item day-tr">'+esc(t.name)+'</div>';});
+      }
+      h+='</div>';
+    }
+    h+='</div></div>';
+  });
+  h+='</div>';
+
+  // 3、每日佩戴具体事项
+  h+='<div class="cal-title">三、每日佩戴具体事项</div>';
+  h+='<div class="inst" style="margin:0 24px">';
+  h+='<h3>&#9733; 矫治器佩戴</h3>';
+  h+='<div class="inst-list" style="margin-top:8px">';
+  var atName={invisible:'隐形矫正',bracket:'托槽矫正',fr3:'FR3',fr2:'FR2',expander:'活动式扩弓器',tb:'TB',myofunctional:'肌激动器',myo_headgear:'肌激动器+口外弓+头帽'};
+  h+='<span class="inst-tag">'+(atName[at]||at)+'</span>';
+  h+='<span class="inst-tag">每日佩戴'+dur+'小时</span>';
+  h+='</div></div>';
+
+  if(useEl&&ePairs.length>0){
+    var ea=document.getElementById('elAnimal').value;
+    var ep=document.getElementById('elPattern').value;
+    var ef=document.getElementById('elFreq').value;
+    var an=animalN[ea]||'未选择';
+    h+='<div style="margin:16px 24px;padding:18px;background:#FFF5F5;border-radius:12px;border:1px solid #FFD6D6">';
+    h+='<h3 style="color:#FF3B30;font-size:15px;font-weight:600;margin-bottom:12px">&#9733; 皮筋佩戴</h3>';
+    h+=buildSVG(ePairs);
+    h+='<div style="margin-top:10px">';
+    h+='</div>';
+    h+='<div style="margin-top:8px;font-size:12px;color:#991B1B">皮圈：<b>'+esc(an)+'</b> | 佩戴：<b>'+esc(ep)+'</b> | 更换：<b>'+esc(ef)+'</b></div>';
+    h+='<div style="margin-top:4px;font-size:11px;color:#92400E">1. 按图示牙位挂皮圈 &nbsp; 2. 进食时取下，餐后重新挂上 &nbsp; 3. 松脱及时更换</div>';
+    h+='</div>';
+  }
+
+  if(useTr&&trains.length>0){
+    h+='<div class="inst" style="margin:16px 24px">';
+    h+='<h3>&#9733; 肌功能训练</h3><div class="inst-list" style="margin-top:8px">';
+    trains.forEach(function(t){
+      h+='<span class="inst-tag">'+esc(t.name)+'</span>';
+    });
+    h+='</div></div>';
+  }
+
+  if(note){
+    h+='<div class="note-display"><strong>医生备注：</strong>'+esc(note)+'</div>';
+  }
+
+  // Footer
+  h+='<div class="pf">';
+  h+='<div>'+(clinic?esc(clinic)+' | ':'')+'OCS正畸佩戴伴侣 | '+new Date().toLocaleDateString('zh-CN')+'</div>';
+  h+='<div>下次复诊：'+es+'</div></div>';
+
+  // Render
+  var pa=document.getElementById('previewArea');
+  pa.innerHTML='<div class="calendar-document" id="calDoc">'+h+'</div>';
+  document.getElementById('printArea').innerHTML='<div class="calendar-document">'+h+'</div>';
+
+  // Actions
+  var actDiv=document.createElement('div');
+  actDiv.className='actions';
+  actDiv.innerHTML='<button class="btn-action btn-back" onclick="goBack()">← 返回修改</button><button class="btn-action btn-print" onclick="window.print()">打印 / 导出 PDF</button>';
+  pa.appendChild(actDiv);
+
+  pa.scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+function goBack(){
+  document.getElementById('previewArea').innerHTML='';
+  window.scrollTo({top:0,behavior:'smooth'});
+  document.getElementById('patientName').focus();
+}
+
+// Toggle training section
+function toggleTraining(){
+  document.getElementById('trainSection').classList.toggle('show',document.getElementById('useTraining').checked);
+  if(!document.getElementById('useTraining').checked){
+    document.querySelectorAll('input[name=training]').forEach(function(cb){cb.checked=false});
+    trainChanged();
+  }
+}
+
+// Toggle training inputs visibility
+function trainChanged(){
+  document.querySelectorAll('input[name="training"]').forEach(function(cb){
+    var div = document.getElementById('train_inputs_'+cb.value);
+    if(div) div.style.display = cb.checked ? 'block' : 'none';
+  });
+}
+
+// Set default dates
+(function(){
+  var today = new Date();
+  var nextMonth = new Date(today);
+  nextMonth.setMonth(nextMonth.getMonth()+1);
+  var fmt = function(d){ return d.toISOString().split('T')[0]; };
+  document.getElementById('lastVisit').value = fmt(today);
+  document.getElementById('nextVisit').value = fmt(nextMonth);
+})();
+
+// Init
+renderTM();
+
+</script>
+</body>
+</html>
